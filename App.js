@@ -1,5 +1,5 @@
 import { StatusBar } from "expo-status-bar";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ScrollView,
   StyleSheet,
@@ -10,15 +10,32 @@ import {
   View,
 } from "react-native";
 import { theme } from "./colors";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+const STORAGE_KEY = "@toDos";
 
 export default function App() {
   const [working, setWorking] = useState(true);
   const [text, setText] = useState("");
   const [toDos, setToDos] = useState({});
+  useEffect(() => {
+    loadTodos();
+  }, []);
   const travel = () => setWorking(false);
   const work = () => setWorking(true);
   const onChangeText = (playload) => setText(playload);
-  const addTodo = () => {
+  const saveTodos = async (toSave) => {
+    //object를 string으로 바꿔줌
+    //setItem은 promise를 return 해줌 따라서 await사용 가능
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+  };
+  const loadTodos = async () => {
+    const s = await AsyncStorage.getItem(STORAGE_KEY);
+    //string to object
+    setToDos(JSON.parse(s));
+    // console.log("storage: ", s);
+  };
+  const addTodo = async () => {
     if (text === "") {
       return;
     }
@@ -27,10 +44,11 @@ export default function App() {
     // });
     const newTodos = { ...toDos, [Date.now()]: { text, working } };
     setToDos(newTodos);
+    await saveTodos(newTodos);
     // save todo
     setText("");
   };
-  console.log(toDos);
+  // console.log(toDos);
   return (
     <View style={styles.container}>
       <StatusBar style="auto" />
@@ -105,6 +123,9 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
     paddingHorizontal: 20,
     borderRadius: 15,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   todoText: {
     color: "white",
