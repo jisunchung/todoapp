@@ -1,16 +1,17 @@
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 import {
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  TurboModuleRegistry,
   View,
 } from "react-native";
 import { theme } from "./colors";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Fontisto } from "@expo/vector-icons";
 
 const STORAGE_KEY = "@toDos";
 
@@ -48,6 +49,33 @@ export default function App() {
     // save todo
     setText("");
   };
+  const deleteTodo = async (key) => {
+    Alert.alert("Delete To Do?", "Are you sure?", [
+      {
+        text: "calcel",
+      },
+      {
+        text: "Im sure",
+        onPress: () => {
+          const newTodos = { ...toDos };
+          delete newTodos[key];
+          setToDos(newTodos);
+          saveTodos(newTodos);
+        },
+      },
+    ]);
+    return;
+    //  //이 object는 아직 state에 있지 않기 때문에 mutate해도된다
+    // //하지만 state는 절대 mutate하면 안됨!!!
+    // const newTodos = { ...toDos };
+    // //삭제
+    // delete newTodos[key];
+    // //update state
+    // setToDos(newTodos);
+    // //save in asyncStorage
+    // await saveTodos(newTodos);
+  };
+
   // console.log(toDos);
   return (
     <View style={styles.container}>
@@ -86,6 +114,9 @@ export default function App() {
           toDos[key].working === working ? (
             <View style={styles.todo} key={key}>
               <Text style={styles.todoText}>{toDos[key].text}</Text>
+              <TouchableOpacity onPress={() => deleteTodo(key)}>
+                <Fontisto name="trash" size={18} color={theme.grey} />
+              </TouchableOpacity>
             </View>
           ) : null
         )}
@@ -118,7 +149,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   todo: {
-    backgroundColor: theme.grey,
+    backgroundColor: theme.todoBg,
     marginBottom: 10,
     paddingVertical: 20,
     paddingHorizontal: 20,
