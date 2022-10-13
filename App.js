@@ -12,21 +12,34 @@ import {
 import { theme } from "./colors";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Fontisto } from "@expo/vector-icons";
+import Checkbox from "expo-checkbox";
 
 const STORAGE_KEY = "@toDos";
 
 export default function App() {
   const [working, setWorking] = useState(true);
   const [text, setText] = useState("");
+  const [completed, setCompleted] = useState(false);
   const [toDos, setToDos] = useState({});
+
   useEffect(() => {
     loadTodos();
+    loadWorking();
   }, []);
-  const travel = () => setWorking(false);
-  const work = () => setWorking(true);
+
+  const travel = async () => {
+    setWorking(false);
+    await saveWorking(false);
+    // console.log(working);
+  };
+  const work = async () => {
+    setWorking(true);
+    await saveWorking(true);
+    // console.log(working);
+  };
   const onChangeText = (playload) => setText(playload);
   const saveTodos = async (toSave) => {
-    //object를 string으로 바꿔줌
+    //object를 string으로 바꿔줌r
     //setItem은 promise를 return 해줌 따라서 await사용 가능
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
   };
@@ -34,7 +47,7 @@ export default function App() {
     const s = await AsyncStorage.getItem(STORAGE_KEY);
     //string to object
     setToDos(JSON.parse(s));
-    // console.log("storage: ", s);
+    console.log("storage: ", s);
   };
   const addTodo = async () => {
     if (text === "") {
@@ -43,7 +56,7 @@ export default function App() {
     // const newTodos = Object.assign({}, toDos, {
     //   [Date.now()]: { text, work: working },
     // });
-    const newTodos = { ...toDos, [Date.now()]: { text, working } };
+    const newTodos = { ...toDos, [Date.now()]: { text, working, completed } };
     setToDos(newTodos);
     await saveTodos(newTodos);
     // save todo
@@ -65,15 +78,21 @@ export default function App() {
       },
     ]);
     return;
-    //  //이 object는 아직 state에 있지 않기 때문에 mutate해도된다
-    // //하지만 state는 절대 mutate하면 안됨!!!
-    // const newTodos = { ...toDos };
-    // //삭제
-    // delete newTodos[key];
-    // //update state
-    // setToDos(newTodos);
-    // //save in asyncStorage
-    // await saveTodos(newTodos);
+  };
+  const saveWorking = async (work) => {
+    await AsyncStorage.setItem("work", work.toString());
+  };
+  const loadWorking = async () => {
+    const s = await AsyncStorage.getItem("work");
+    var isFalseBoolean = s === "true";
+    setWorking(isFalseBoolean);
+  };
+  const updateCompleted = async (key) => {
+    // console.log(key, toDos[key].completed);
+    const newTodos = { ...toDos };
+    newTodos[key].completed = !toDos[key].completed;
+    setToDos(newTodos);
+    saveTodos(newTodos);
   };
 
   // console.log(toDos);
@@ -113,6 +132,11 @@ export default function App() {
         {Object.keys(toDos).map((key) =>
           toDos[key].working === working ? (
             <View style={styles.todo} key={key}>
+              <Checkbox
+                value={toDos[key].completed}
+                onValueChange={() => updateCompleted(key)}
+                color={toDos[key].completed ? "#4630EB" : undefined}
+              />
               <Text style={styles.todoText}>{toDos[key].text}</Text>
               <TouchableOpacity onPress={() => deleteTodo(key)}>
                 <Fontisto name="trash" size={18} color={theme.grey} />
