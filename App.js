@@ -13,18 +13,22 @@ import { theme } from "./colors";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Fontisto } from "@expo/vector-icons";
 import Checkbox from "expo-checkbox";
+import { AntDesign } from "@expo/vector-icons";
+import Task from "./Task";
+import TodoComp from "./TodoComp";
 
 const STORAGE_KEY = "@toDos";
 
 export default function App() {
   const [working, setWorking] = useState(true);
   const [text, setText] = useState("");
-  const [completed, setCompleted] = useState(false);
+  const [completed] = useState(false);
   const [toDos, setToDos] = useState({});
 
   useEffect(() => {
     loadTodos();
     loadWorking();
+    Object.keys(toDos).map((id) => console.log("id!!!!!!!!!!!", id));
   }, []);
 
   const travel = async () => {
@@ -41,6 +45,7 @@ export default function App() {
   const saveTodos = async (toSave) => {
     //object를 string으로 바꿔줌r
     //setItem은 promise를 return 해줌 따라서 await사용 가능
+    setToDos(toSave);
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
   };
   const loadTodos = async () => {
@@ -65,7 +70,7 @@ export default function App() {
   const deleteTodo = async (key) => {
     Alert.alert("Delete To Do?", "Are you sure?", [
       {
-        text: "calcel",
+        text: "cancel",
       },
       {
         text: "Im sure",
@@ -93,12 +98,16 @@ export default function App() {
     newTodos[key].completed = !toDos[key].completed;
     setToDos(newTodos);
     saveTodos(newTodos);
+    console.log("update!", toDos);
+  };
+  const updateText = () => {
+    Alert.alert("edit");
   };
 
   // console.log(toDos);
   return (
     <View style={styles.container}>
-      <StatusBar style="auto" />
+      <StatusBar style="light" />
       <View style={styles.header}>
         <TouchableOpacity onPress={work}>
           <Text
@@ -129,16 +138,31 @@ export default function App() {
         />
       </View>
       <ScrollView>
-        {Object.keys(toDos).map((key) =>
-          toDos[key].working === working ? (
-            <View style={styles.todo} key={key}>
+        {/* <Task toDos={toDos} working={working}></Task> */}
+        {Object.keys(toDos).map((id) =>
+          toDos[id].working === working ? (
+            <View style={styles.todo} key={id}>
+              {/* <TodoComp ></TodoComp> */}
               <Checkbox
-                value={toDos[key].completed}
-                onValueChange={() => updateCompleted(key)}
-                color={toDos[key].completed ? "#4630EB" : undefined}
+                value={toDos[id].completed}
+                onValueChange={() => updateCompleted(id)}
+                color={toDos[id].completed ? "#4630EB" : undefined}
               />
-              <Text style={styles.todoText}>{toDos[key].text}</Text>
-              <TouchableOpacity onPress={() => deleteTodo(key)}>
+              <Text
+                style={{
+                  ...styles.todoText,
+                  textDecorationLine: toDos[id].completed
+                    ? "line-through"
+                    : null,
+                  color: toDos[id].completed ? theme.grey : "white",
+                }}
+              >
+                {toDos[id].text}
+              </Text>
+              {/* <TouchableOpacity onPress={() => updateText()}>
+                <AntDesign name="edit" size={24} color="black" />
+              </TouchableOpacity> */}
+              <TouchableOpacity onPress={() => deleteTodo(id)}>
                 <Fontisto name="trash" size={18} color={theme.grey} />
               </TouchableOpacity>
             </View>
